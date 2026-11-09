@@ -1,0 +1,99 @@
+Zombie con Balde (-4)
+
+vida = 800
+ataque = 100
+tiempo_en_atacar = 2
+tiempo_en_moverse = 5
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 4
+
+Zombie con Cono (-3)
+
+vida = 400
+ataque = 100
+tiempo_en_atacar = 2
+tiempo_en_moverse = 5
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 2
+
+Zombie con Bandera (-2)
+
+vida = 200
+ataque = 100
+tiempo_en_atacar = 2
+tiempo_en_moverse = 4
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 2
+
+Zombie Común (-1)
+
+vida = 200
+ataque = 100
+tiempo_en_atacar = 2
+tiempo_en_moverse = 5
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 1
+
+Girasol Común (1)
+
+vida = 300
+ataque = 0
+tiempo_en_atacar = 0
+tiempo_en_moverse = 0
+generacion_soles = 25
+tiempo_en_generar_soles = 10
+costo = 50
+
+Lanzaguisantes Común (2)
+
+vida = 300
+ataque = 20
+tiempo_en_atacar = 2
+tiempo_en_moverse = 0
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 25
+
+Nuez (3)
+
+vida = 4000
+ataque = 0
+tiempo_en_atacar = 0
+tiempo_en_moverse = 0
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 100
+
+Lanzaguisantes de Hielo (4)
+
+vida = 300
+ataque = 20
+tiempo_en_atacar = 2
+tiempo_en_moverse = 0
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 75
+
+Tronco de Fuego (5)
+
+vida = 300
+ataque = 0
+tiempo_en_atacar = 0
+tiempo_en_moverse = 0
+generacion_soles = 0
+tiempo_en_generar_soles = 0
+costo = 50
+
+Girasol Doble (6)
+
+vida = 300
+ataque = 0
+tiempo_en_atacar = 0
+tiempo_en_moverse = 0
+generacion_soles = 25
+tiempo_en_generar_soles = 5
+costo = 50

@@ -1,0 +1,11 @@
+Proyectil de Lanzaguisantes Común (1)
+
+ataque = 20
+tiempo_en_recorrer_casilla = 0.1
+esta_congelado = 0
+
+Proyectil de Lanzaguisants de Hielo (2)
+
+ataque = 20
+tiempo_en_recorrer_casilla = 0.1
+esta_congelado = 1
