@@ -20,3 +20,7 @@ Tanto *Matriz_Entidades* como *Matriz_Proyectiles* son triple punteros de tipo i
 Nuevas plantas y nuevos zombies. Los proyectiles son una estructura separada que reaccionan a las casillas que atraviesan.
 ### Paquete 3: Mejoras en la Visualización
 *W.I.P.*
+## Lógica del Proyecto (Terminal)
+https://github.com/user-attachments/assets/428886dc-3681-4ba3-86e2-7064b5f3c519
+
+
