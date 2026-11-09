@@ -24,13 +24,13 @@ Nuevas plantas y nuevos zombies. Los proyectiles son una estructura separada que
 ### Girasol (1)
 Planta generadora de soles. 
 ### Lanzaguisantes (2)
-Planta defensiva, lanza arvejas/guisantes hacia los zombies en forma de proyectiles.
+Planta defensiva, lanza guisantes hacia los zombies en forma de proyectiles.
 ### Nuez (3)
 Planta exclusivamente defensiva, tiene muchos puntos de vida.
 ### Lanzaguisantes de Hielo (4)
-Planta defensiva, lanza arvejas/guisantes congelados, los cuales ralentizan a los zombies al impactar.
+Planta defensiva, lanza guisantes congelados, los cuales ralentizan a los zombies al impactar.
 ### Tronco de Fuego (5)
-Planta defensiva, cuando una arveja/guisante la atraviesa, se prende en llamas, haciendo que tenga el doble de daño.
+Planta defensiva, cuando un guisante la atraviesa, se prende en llamas, haciendo que tenga el doble de daño.
 ### Girasol Doble (6)
 Planta generadora de soles, genera el doble de soles que el girasol regular.
 ## Zombies
@@ -39,7 +39,7 @@ Zombie regular, tiene la menor cantidad de vida de todos los zombies, pero es el
 ### Zombie con Bandera (-2)
 Tiene la misma cantidad de vida que el zombie común, pero es más rápido.
 ### Zombie con Cono (-3)
-Tiene más vida que el zombie común, resistiendo más impactos de proyectiles/arvejas/guisantes.
+Tiene más vida que el zombie común, resistiendo más impactos de guisantes.
 ### Zombie con Balde (-4)
-Tiene aún más vida que el zombie con cono, aunque es el zombie menos frecuente, es el que más impactos de arvejas resiste.
+Tiene aún más vida que el zombie con cono, aunque es el zombie menos frecuente, es el que más impactos de guisantes resiste.
 
