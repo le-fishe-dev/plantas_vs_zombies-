@@ -1,0 +1,98 @@
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3_image/SDL_image.h>
+
+#define FILAS 5
+#define COLUMNAS 9
+#define TAM_CASILLA 80 
+
+// Funcion para cargar texturas con manejo de errores
+SDL_Texture *cargarTextura(SDL_Renderer *renderizador, const char *archivo){
+  SDL_Texture *textura = IMG_LoadTexture(renderizador, archivo);
+  if(textura == NULL)
+    SDL_Log("Error al cargar %s: %s", archivo, SDL_GetError());
+  return textura;
+}
+
+int main(int argc, char *argv[]){
+  // Matriz de prueba (Salida simulada de la Tarea 1 o 2)
+  // 0 = Pasto, 1 = Zombie, 2 = Girasol, 3 = Nuez, 4 = Lanzaguisantes
+  int mapa[FILAS][COLUMNAS] = {
+    {0, 0, 0, 0, 0, 0, 0, 1, 0},
+    {2, 4, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 3, 0, 0, 0, 0, 0, 0},
+    {2, 4, 0, 0, 0, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0}
+  };
+
+  bool jugando = true;
+  SDL_Window *ventana = NULL;
+  SDL_Renderer *renderizador = NULL;
+
+  if(!SDL_Init(SDL_INIT_VIDEO)){
+      SDL_Log("Error al iniciar SDL: %s", SDL_GetError());
+      return 1;
+  }
+
+  if(!SDL_CreateWindowAndRenderer("Plantas vs Zombies - Visualizacion", COLUMNAS * TAM_CASILLA, FILAS * TAM_CASILLA, 0, &ventana, &renderizador)){
+      SDL_Log("Error al crear ventana: %s", SDL_GetError());
+      SDL_Quit();
+      return 1;
+  }
+
+  // Cargamos los sprites
+  SDL_Texture *texPasto = cargarTextura(renderizador, "pasto.png");
+  SDL_Texture *texZombie = cargarTextura(renderizador, "zombie.png");
+  SDL_Texture *texGirasol = cargarTextura(renderizador, "girasol.png");
+  SDL_Texture *texNuez = cargarTextura(renderizador, "nuez.png");
+  SDL_Texture *texLanza = cargarTextura(renderizador, "lanzaguisantes.png");
+
+  while(jugando){
+      SDL_Event evento;
+      while(SDL_PollEvent(&evento)){
+        if(evento.type == SDL_EVENT_QUIT) jugando = false;
+        if(evento.type == SDL_EVENT_KEY_DOWN && evento.key.scancode == SDL_SCANCODE_ESCAPE) jugando = false;
+      }
+
+      SDL_SetRenderDrawColor(renderizador, 0, 0, 0, 255);
+      SDL_RenderClear(renderizador);
+
+      // Dibujar el jardin basado en la matriz
+      for(int fila = 0; fila < FILAS; fila++){
+        for(int columna = 0; columna < COLUMNAS; columna++){
+          
+          SDL_FRect rectangulo = {columna * TAM_CASILLA, fila * TAM_CASILLA, TAM_CASILLA, TAM_CASILLA};
+          
+          // Fondo de pasto siempre
+          if(texPasto) SDL_RenderTexture(renderizador, texPasto, NULL, &rectangulo);
+
+          // Dibujar entidades
+          int entidad = mapa[fila][columna];
+          if(entidad == 1 && texZombie) {
+              SDL_RenderTexture(renderizador, texZombie, NULL, &rectangulo);
+          } else if(entidad == 2 && texGirasol) {
+              SDL_RenderTexture(renderizador, texGirasol, NULL, &rectangulo);
+          } else if(entidad == 3 && texNuez) {
+              SDL_RenderTexture(renderizador, texNuez, NULL, &rectangulo);
+          } else if(entidad == 4 && texLanza) {
+              SDL_RenderTexture(renderizador, texLanza, NULL, &rectangulo);
+          }
+        }
+      }
+
+      SDL_RenderPresent(renderizador);
+      SDL_Delay(16); // ~60 FPS
+  }
+
+  // Limpieza
+  SDL_DestroyTexture(texPasto);
+  SDL_DestroyTexture(texZombie);
+  SDL_DestroyTexture(texGirasol);
+  SDL_DestroyTexture(texNuez);
+  SDL_DestroyTexture(texLanza);
+  SDL_DestroyRenderer(renderizador);
+  SDL_DestroyWindow(ventana);
+  SDL_Quit();
+
+  return 0;
+}
