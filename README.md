@@ -1,5 +1,5 @@
 # *Plantas vs Zombies*
-***Fecha de Entrega: 18 de Noviembre, a las 23:59 horas.***  
+***Fecha de Entrega: 20 de Noviembre, a las 23:59 horas.***  
 ***Fecha de Presentación: 23 de Noviembre - 4 de Diciembre.***  
 ## Organización del proyecto
 ### Lectura de la Entrada
