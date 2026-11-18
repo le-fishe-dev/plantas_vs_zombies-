@@ -22,7 +22,7 @@ Función que permite al zombie desplazarse una última vez, una vez llegado a la
 final del juego. Si el zombie se desplaza y no hay nadie que lo detenga, el juego termina
 en una derrota para el jugador.
 */
-void desplazamiento_zombie_final(int indice, entidad **array, int* vida_de_la_casa, int *juego_activo);
+void desplazamiento_zombie_final(int indice, entidad **array, int* vida_de_la_casa);
 
 /*
 Función que permite al zombie desplazarse hacia una casilla despejada, siempre y cuando siga
