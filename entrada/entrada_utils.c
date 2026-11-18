@@ -1,21 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// 1° caja de configuracion 
-typedef struct {
-    int max_oleadas;
-    int vida_casa;
-    int vida_zombi_base;
-    int freq_disparo;
-    int freq_soles;
-} Configuracion;
+#include "entrada_utils.h"
 
-// 2° caja del mapa jardin 
-typedef struct {
-    int filas; 
-    int columnas;
-    int **matriz; // tablero del juego
-} Mapa;
+// Funcion para leer el archivo de variables guardadas 
+int cargarVariables(const char *nombreArchivo, Variables_Main_Loop *variables) {
+    FILE *archivo = fopen(nombreArchivo, "r");
+    if (archivo == NULL) {
+        return 0; // falla
+    } 
+
+    // Leemos los 18 numeros de forma ordenada y los guardamos en la caja 
+    fscanf(archivo, "%d %f %f %d %d %d %d %d %d %f %d %d %f %f %d\n", 
+        &variables->soles, 
+        &variables->reloj_juego,
+        &variables->reloj_auxiliar,
+        &variables->oleada_en_curso,
+        &variables->oleadas_transcurridas,
+
+        &variables->presupuesto_oleada,
+        &variables->juego_activo,
+        &variables->indice_entidad,
+        &variables->indice_proyectil,
+        &variables->contador_soles,
+
+        &variables->indice_aux,
+        &variables->tipo_de_zombie,
+        &variables->contador_spawn_oleada,
+        &variables->tiempo_spawn_oleada,
+        &variables->fila_casilla_spawn);
+
+    fclose(archivo); // cerramos el archivo 
+    return 1; // exito 
+}
+
+// Guardar el estado actual de las variables del juego
+int guardarVariables(const char *nombreArchivo, const Variables_Main_Loop *variables) {
+    FILE *archivo = fopen(nombreArchivo, "w");
+    if (archivo == NULL) {
+        return 0; // falla
+    }
+
+    // Guardar cada variable del juego en el archivo
+    fprintf(archivo, "%d %f %f %d %d %d %d %d %d %f %d %d %f %f %d\n", 
+        variables->soles, 
+        variables->reloj_juego,
+        variables->reloj_auxiliar,
+        variables->oleada_en_curso,
+        variables->oleadas_transcurridas,
+
+        variables->presupuesto_oleada,
+        variables->juego_activo,
+        variables->indice_entidad,
+        variables->indice_proyectil,
+        variables->contador_soles,
+
+        variables->indice_aux,
+        variables->tipo_de_zombie,
+        variables->contador_spawn_oleada,
+        variables->tiempo_spawn_oleada,
+        variables->fila_casilla_spawn);
+
+    fclose(archivo);
+    return 1;
+}
 
 // Funcion para leer el archivo de configuracion 
 int cargarConfiguracion(const char *nombreArchivo, Configuracion *config) {
@@ -24,13 +72,15 @@ int cargarConfiguracion(const char *nombreArchivo, Configuracion *config) {
         return 0; // falla
     } 
 
-    // Leemos los 5 numeros de forma ordenada y los guardamos en la caja 
-    fscanf(archivo, "%d %d %d %d %d",
-           &config->max_oleadas,
-           &config->vida_casa,
-           &config->vida_zombi_base,
-           &config->freq_disparo,
-           &config->freq_soles);
+    // Leemos los 7 numeros de forma ordenada y los guardamos en la caja 
+    fscanf(archivo, "%d %f %f %d %f %f %d",
+           &config->cantidad_soles_generados_automaticamente,
+           &config->tiempo_generacion_automatica_soles,
+           &config->duracion_tick,
+           &config->numero_de_ataques_para_destruir_casa,
+           &config->tiempo_preparacion_inicial,
+           &config->tiempo_de_descanso,
+           &config->cantidad_de_oleadas);
 
     fclose(archivo); // cerramos el archivo 
     return 1; // exito 
@@ -138,71 +188,10 @@ void aumentarMatriz(Mapa *mapa, Configuracion *config, int nuevasFilas, int nuev
     mapa->columnas = nuevasColumnas;
 
     // REGLA: ajustar la velocidad de generacion de soles al agrandar el mapa
-    if (config->freq_soles > 1) {
-        config->freq_soles--;
+    if (config->tiempo_generacion_automatica_soles > 1) {
+        config->tiempo_generacion_automatica_soles--;
     }
 
-    printf("\n-> Mapa agrandado a %dx%d. Tasa de soles ajustada a %d.\n",
-           mapa->filas, mapa->columnas, config->freq_soles);
-}
-
-int main() {
-    Configuracion miconfig;
-    Mapa mimapa;
-    int opcion = 0;
-
-    // Cargar la configuracion desde el archivo
-    if (cargarConfiguracion("configuracion.txt", &miconfig)) {
-        printf("Configuracion cargada exitosamente:\n");
-        printf("Max Oleadas: %d\n", miconfig.max_oleadas);
-        printf("Vida Casa: %d\n", miconfig.vida_casa);
-        printf("Vida Zombi Base: %d\n", miconfig.vida_zombi_base);
-        printf("Frecuencia Disparo: %d\n", miconfig.freq_disparo);
-        printf("Frecuencia Soles: %d\n", miconfig.freq_soles);
-    } else {
-        printf("Error al cargar la configuracion.\n");
-        return 1;
-    }
-
-    // Cargar mapa inicial 
-    if (!cargarMapa("mapa.txt", &mimapa)) {
-        printf("Error al cargar el mapa.\n");
-        return 1;
-    }
-
-    // Menu interactivo con las funciones del paquete 
-    do {
-        mostrarMapa(&mimapa);
-        printf("\n--- MENU PAQUETE 1 ---\n");
-        printf("1. Guardar partida actual\n");
-        printf("2. Cargar partida guardada\n");
-        printf("3. Aumentar tamano del mapa\n");
-        printf("4. Salir\n");
-        printf("Selecciona una opcion: ");
-        scanf("%d", &opcion);
-
-        if (opcion == 1) {
-            if (guardarEstado("partida_guardada.txt", &mimapa)) {
-                printf("\nPartida guardada exitosamente en 'partida_guardada.txt'!\n");
-            } else {
-                printf("\nError al guardar la partida.\n");
-            }
-        } else if (opcion == 2) {
-            liberarMapa(&mimapa); // liberar mapa previo 
-            if (cargarMapa("partida_guardada.txt", &mimapa)) {
-                printf("\nPartida cargada exitosamente!\n");
-            } else {
-                printf("\nError al cargar la partida guardada.\n");
-            }
-        } else if (opcion == 3) {
-            int nf, nc;
-            printf("Ingresa nuevas filas y columnas (actual: %dx%d): ", mimapa.filas, mimapa.columnas);
-            scanf("%d %d", &nf, &nc);
-            aumentarMatriz(&mimapa, &miconfig, nf, nc);
-        }
-
-    } while (opcion != 4);
-
-    liberarMapa(&mimapa);
-    return 0; 
+    printf("\n-> Mapa agrandado a %dx%d. Tiempo de generacion de soles ajustado a: %.2f.\n",
+           mapa->filas, mapa->columnas, config->tiempo_generacion_automatica_soles);
 }

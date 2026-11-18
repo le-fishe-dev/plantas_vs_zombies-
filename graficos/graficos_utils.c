@@ -1,35 +1,4 @@
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
-#include <stdio.h>
-#include <stdbool.h>
-
-#define ANCHO_VENTANA 1100
-#define ALTO_VENTANA 550
-
-// Configuracion de las hojas de sprites de zombies
-#define COLS_Z_CAMINAR   9
-#define FILAS_Z_CAMINAR  1
-#define FRAMES_Z_CAMINAR 9
-
-#define COLS_Z_COMER     5
-#define FILAS_Z_COMER    8
-#define FRAMES_Z_COMER   40
-
-typedef struct {
-    SDL_Texture* jardin;
-    SDL_Texture* pasto_respaldo;
-    SDL_Texture* zombie_caminar;
-    SDL_Texture* zombie_comer;
-    SDL_Texture* zombie_respaldo;
-    SDL_Texture* zombieb;
-    SDL_Texture* girasol;
-    SDL_Texture* lanzaguisantes;
-    SDL_Texture* lanza_hielo;
-    SDL_Texture* nuez;
-    SDL_Texture* tronco;
-    SDL_Texture* guisante;
-    SDL_Texture* guisante_azul;
-} TexturasJuego;
+#include "graficos_utils.h"
 
 // Dibuja un sprite manteniendo su proporcion original, con altura uniforme y apoyado en la base de la celda
 void dibujar_sprite_igualado(
@@ -69,9 +38,8 @@ void dibujar_tablero(
     TexturasJuego* tex,
     int filas,
     int columnas,
-    int matriz_entidades[filas][columnas],
-    int matriz_proyectiles[filas][columnas]
-) {
+    int **matriz_entidades,
+    int **matriz_proyectiles) {
     // 1. Calcular tamano automatico de cada celda para el mapa modular
     float max_celda_y = (float)ALTO_VENTANA / (filas + 0.85f);
     float max_celda_x = (float)ANCHO_VENTANA / (columnas + 1.05f * (filas + 0.85f));
@@ -253,93 +221,4 @@ void dibujar_tablero(
             }
         }
     }
-}
-
-int main(int argc, char* argv[]) {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_Log("Error al inicializar SDL: %s", SDL_GetError());
-        return -1;
-    }
-
-    SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
-
-    if (!SDL_CreateWindowAndRenderer("Plants vs Zombies - Zombies Animados", ANCHO_VENTANA, ALTO_VENTANA, 0, &window, &renderer)) {
-        SDL_Log("Error al crear ventana o renderer: %s", SDL_GetError());
-        SDL_Quit();
-        return -1;
-    }
-
-    TexturasJuego tex = {0};
-    tex.jardin          = IMG_LoadTexture(renderer, "jardin.png");
-    tex.pasto_respaldo  = IMG_LoadTexture(renderer, "pasto.png");
-    tex.zombie_caminar  = IMG_LoadTexture(renderer, "zombie_caminar.png");
-    tex.zombie_comer    = IMG_LoadTexture(renderer, "zombie_comer.png");
-    tex.zombie_respaldo = IMG_LoadTexture(renderer, "zombie.png");
-    tex.zombieb         = IMG_LoadTexture(renderer, "zombieb.png");
-    tex.girasol         = IMG_LoadTexture(renderer, "girasol.png");
-    tex.lanzaguisantes  = IMG_LoadTexture(renderer, "lanzaguisantes.png");
-    tex.lanza_hielo     = IMG_LoadTexture(renderer, "lanzaguisanteshielo.png");
-    tex.nuez            = IMG_LoadTexture(renderer, "nuez.png");
-    tex.tronco          = IMG_LoadTexture(renderer, "tronco.png");
-    tex.guisante        = IMG_LoadTexture(renderer, "guisante.png");
-    tex.guisante_azul   = IMG_LoadTexture(renderer, "guisanteazul.png");
-
-    // Filas 0 y 2 tienen zombies en espacio libre -> animacion CAMINAR
-    // Filas 1 y 3 tienen zombies pegados a las nueces -> animacion COMER
-    int filas = 7;
-    int columnas =12 ;
-
-    int matriz_entidades[4][6] = {
-        {1, 2, 5, 0, 0, -3},
-        {6, 4, 3, -4, 0, 0},
-        {1, 2, 5, 0, -2, 0},
-        {6, 4, 3, -1, 0, 0}
-    };
-
-    int matriz_proyectiles[4][6] = {
-        {0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0}
-    };
-
-    bool corriendo = true;
-    SDL_Event evento;
-
-    while (corriendo) {
-        while (SDL_PollEvent(&evento)) {
-            if (evento.type == SDL_EVENT_QUIT) {
-                corriendo = false;
-            }
-        }
-
-        SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-        SDL_RenderClear(renderer);
-
-        dibujar_tablero(renderer, &tex, filas, columnas, matriz_entidades, matriz_proyectiles);
-
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16);
-    }
-
-    if (tex.jardin) SDL_DestroyTexture(tex.jardin);
-    if (tex.pasto_respaldo) SDL_DestroyTexture(tex.pasto_respaldo);
-    if (tex.zombie_caminar) SDL_DestroyTexture(tex.zombie_caminar);
-    if (tex.zombie_comer) SDL_DestroyTexture(tex.zombie_comer);
-    if (tex.zombie_respaldo) SDL_DestroyTexture(tex.zombie_respaldo);
-    if (tex.zombieb) SDL_DestroyTexture(tex.zombieb);
-    if (tex.girasol) SDL_DestroyTexture(tex.girasol);
-    if (tex.lanzaguisantes) SDL_DestroyTexture(tex.lanzaguisantes);
-    if (tex.lanza_hielo) SDL_DestroyTexture(tex.lanza_hielo);
-    if (tex.nuez) SDL_DestroyTexture(tex.nuez);
-    if (tex.tronco) SDL_DestroyTexture(tex.tronco);
-    if (tex.guisante) SDL_DestroyTexture(tex.guisante);
-    if (tex.guisante_azul) SDL_DestroyTexture(tex.guisante_azul);
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-
-    return 0;
 }

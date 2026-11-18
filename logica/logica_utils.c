@@ -68,18 +68,18 @@ int obtiene_cantidad_tipos_zombies() {
 	FILE *fh_entidades;	// apertura del stream
 
 	// abrimos 'entidades.txt' en modo lectura
-	fh_entidades = fopen("entidades.txt", "r");	
+	fh_entidades = fopen("configuracion/entidades.txt", "r");	
 
 	for (int i = -50; i < 0; i++) {
 		sprintf(tipo_entidad_str, "(%d)", i);
 		FILE *fh_entidades;	// apertura del stream
 
 		// abrimos 'entidades.txt' en modo lectura
-		fh_entidades = fopen("entidades.txt", "r");	
+		fh_entidades = fopen("configuracion/entidades.txt", "r");	
 
 		// En caso de no poder leer el archivo de texto
 		if (fh_entidades == NULL) {
-			printf("'entidades.txt' no pudo ser abierto..\n");
+			printf("'configuracion/entidades.txt' no pudo ser abierto..\n");
 			return 1;
 		}
 
@@ -111,11 +111,11 @@ int obtiene_proyectil(char atributo[], int tipo_proyectil) {
 	FILE *fh_proyectiles;	// apertura del stream
 
 	// abrimos 'proyectiles.txt' en modo lectura
-	fh_proyectiles = fopen("proyectiles.txt", "r");	
+	fh_proyectiles = fopen("configuracion/proyectiles.txt", "r");	
 
 	// En caso de no poder leer el archivo de texto
 	if (fh_proyectiles == NULL) {
-		printf("'proyectiles.txt' no pudo ser abierto..\n");
+		printf("'configuracion/proyectiles.txt' no pudo ser abierto..\n");
 		return 1;
 	}
 
@@ -174,11 +174,11 @@ int obtiene_entidad(char atributo[], int tipo_entidad) {
 	FILE *fh_entidades;	// apertura del stream
 
 	// abrimos 'entidades.txt' en modo lectura
-	fh_entidades = fopen("entidades.txt", "r");	
+	fh_entidades = fopen("configuracion/entidades.txt", "r");	
 
 	// En caso de no poder leer el archivo de texto
 	if (fh_entidades == NULL) {
-		printf("'entidades.txt' no pudo ser abierto..\n");
+		printf("'configuracion/entidades.txt' no pudo ser abierto..\n");
 		return 1;
 	}
 

@@ -3,28 +3,168 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "entidades.h"
-#include "proyectiles.h"
-#include "mecanicas_del_juego.h"
-#include "logica_utils.h"
+#include "logica/entidades.h"
+#include "logica/proyectiles.h"
+#include "logica/mecanicas_del_juego.h"
+#include "logica/logica_utils.h"
 
-#define CANTIDAD_SOLES_GENERADOS_AUTOMATICAMENTE 25  // 25 es la cantidad estándar del juego
-#define TIEMPO_GENERACION_AUTOMATICA_SOLES 10.00     // Debe ser alto para cumplir la lógica exigida del proyecto
-#define DURACION_TICK 0.05                           // Recomendado entre 0.05 y 0.10  (1.00 para mayor estabilidad) 
-#define NUMERO_DE_ATAQUES_PARA_DESTRUIR_CASA 1       // Debe ser positivo
-#define TIEMPO_ENTRE_OLEADAS 40.00                   // Menos de 40 (aprox) hace que no hayan descansos entre oleadas
-#define TIEMPO_PREPARACION_INICIAL 18.00             // NO CAMBIAR ESTE PARÁMETRO, valor exigido por proyecto
-#define TIEMPO_DURACION_DE_UNA_OLEADA 10.00          // Alrededor de 10 es razonable
+#include "entrada/entrada_utils.h"
+
+#include "graficos/graficos_utils.h"
+
+// Configuracion de las dimensiones de la ventana de juego
+#define ANCHO_VENTANA 1100
+#define ALTO_VENTANA 550
+
+// Configuracion de las hojas de sprites de zombies
+#define COLS_Z_CAMINAR   9
+#define FILAS_Z_CAMINAR  1
+#define FRAMES_Z_CAMINAR 9
+
+#define COLS_Z_COMER     5
+#define FILAS_Z_COMER    8
+#define FRAMES_Z_COMER   40
 
 int main(void) {
+	/* ---------------- INICIALIZACIÓN GRÁFICA ---------------- */
+
+	// Se revisa si SDL está correctamente instalado.
+	if (!SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_Log("Error al inicializar SDL: %s", SDL_GetError());
+        return 1;
+    }
+    
+    SDL_Window* window = NULL;
+    SDL_Renderer* renderer = NULL;
+
 	/* ---------------- LECTURA DE LA ENTRADA ---------------- */
 	
-	// Ingresar matriz aquí
-	int **Matriz_Entidades;
+	Configuracion miconfig;
+    Mapa mimapa;
+    Variables_Main_Loop misvariables;
 
-	// Ingresar filas y columnas de la matriz aquí
-	int filas_matriz;	
-	int columnas_matriz ;	
+    int opcion = 0;
+
+    // Variables sujetas a posibilidad de cargar partida guardada
+    // Asignamos valor por defecto de estas variables
+	misvariables.soles = 0;
+	misvariables.reloj_juego = 0.0f; 
+	misvariables.reloj_auxiliar = 0.0f;
+	misvariables.oleada_en_curso = 0;
+	misvariables.oleadas_transcurridas = 0;
+
+	misvariables.presupuesto_oleada = 0;
+	misvariables.juego_activo = 1;
+	misvariables.indice_entidad = 0;
+	misvariables.indice_proyectil = 0;
+	misvariables.contador_soles = 0.0f;
+
+	misvariables.indice_aux = 0;
+	misvariables.tipo_de_zombie = 0;
+	misvariables.contador_spawn_oleada = 0.0f;
+	misvariables.tiempo_spawn_oleada = 0.0f;
+	misvariables.fila_casilla_spawn = 0;
+
+    // Cargar la configuracion desde el archivo
+    if (cargarConfiguracion("configuracion/configuracion.txt", &miconfig)) {
+        printf("Configuracion cargada exitosamente:\n\n");
+
+        printf("Cantidad de soles generados automaticamente: %d\n", miconfig.cantidad_soles_generados_automaticamente);
+        printf("Tiempo de generacion automatica de soles: %.2f\n", miconfig.tiempo_generacion_automatica_soles);
+        printf("Duracion de un tick: %.2f\n", miconfig.duracion_tick);
+        printf("Numero minimo de ataques para destruir casa: %d\n", miconfig.numero_de_ataques_para_destruir_casa);
+        printf("Tiempo de preparacion inicial: %.2f\n", miconfig.tiempo_preparacion_inicial);
+        printf("Tiempo de descanso: %.2f\n", miconfig.tiempo_de_descanso);
+        printf("Cantidad de oleadas: %d\n", miconfig.cantidad_de_oleadas);
+    } else {
+        printf("Error al cargar la configuracion.\n");
+        return 1;
+    }
+
+    // Cargar mapa inicial 
+    if (!cargarMapa("configuracion/mapa.txt", &mimapa)) {
+        printf("Error al cargar el mapa.\n");
+        return 1;
+    }
+
+    // Menu interactivo con las funciones del paquete 
+    do {
+        mostrarMapa(&mimapa);
+        printf("\n--- MENU PAQUETE 1 ---\n");
+        printf("1. Guardar partida actual\n");
+        printf("2. Cargar partida guardada\n");
+        printf("3. Aumentar tamano del mapa\n");
+        printf("4. Jugar!\n");
+        printf("Selecciona una opcion: ");
+        scanf("%d", &opcion);
+        
+        // Instrucción para despejar la terminal
+		printf("\033[2J\033[H");
+
+        if (opcion == 1) {
+            if (guardarEstado("configuracion/partida_guardada.txt", &mimapa)) {
+                printf("\nPartida guardada exitosamente en 'configuracion/partida_guardada.txt'!\n");
+            } else {
+                printf("\nError al guardar la partida.\n");
+            }
+        } else if (opcion == 2) {
+            liberarMapa(&mimapa); // liberar mapa previo 
+            if (cargarMapa("configuracion/partida_guardada.txt", &mimapa)) {
+                printf("\nPartida cargada exitosamente!\n");
+            } else {
+                printf("\nError al cargar la partida guardada.\n");
+            }
+            if (!cargarVariables("configuracion/variables_guardadas.txt", &misvariables)) {
+        		printf("Error al cargar las variables.\n");
+        		return 1;
+    		}
+        } else if (opcion == 3) {
+            int nf, nc;
+            printf("Ingresa nuevas filas y columnas (actual: %dx%d): ", mimapa.filas, mimapa.columnas);
+            scanf("%d %d", &nf, &nc);
+            while(getchar() != '\n');
+            aumentarMatriz(&mimapa, &miconfig, nf, nc);
+        }
+
+    } while (opcion != 4);
+
+	// Se genera matriz de 5x9 con memoria dinámica.
+	int **Matriz_Entidades = mimapa.matriz;	// puntero de matriz
+	int filas_matriz = mimapa.filas;	
+	int columnas_matriz = mimapa.columnas;	
+
+	// Se asignan datos de la configuración leida
+	int CANTIDAD_SOLES_GENERADOS_AUTOMATICAMENTE = miconfig.cantidad_soles_generados_automaticamente;
+	float TIEMPO_GENERACION_AUTOMATICA_SOLES = miconfig.tiempo_generacion_automatica_soles;
+	float DURACION_TICK = miconfig.duracion_tick;
+	int NUMERO_DE_ATAQUES_PARA_DESTRUIR_CASA = miconfig.numero_de_ataques_para_destruir_casa;      
+	float TIEMPO_PREPARACION_INICIAL = miconfig.tiempo_preparacion_inicial;
+	float TIEMPO_DE_DESCANSO = miconfig.tiempo_de_descanso;
+	int CANTIDAD_DE_OLEADAS = miconfig.cantidad_de_oleadas;
+
+	// Actualizamos variables con el valor asignado final
+	int soles = misvariables.soles = 0;
+	float reloj_juego = misvariables.reloj_juego = 0.0f; 
+	float reloj_auxiliar = misvariables.reloj_auxiliar = 0.0f;
+	int oleada_en_curso =misvariables.oleada_en_curso = 0;
+	int oleadas_transcurridas =misvariables.oleadas_transcurridas = 0;
+
+	int presupuesto_oleada =misvariables.presupuesto_oleada = 0;
+	int juego_activo =misvariables.juego_activo = 1;
+	int indice_entidad =misvariables.indice_entidad = 0;
+	int indice_proyectil =misvariables.indice_proyectil = 0;
+	float contador_soles =misvariables.contador_soles = 0.0f;
+
+	int indice_aux =misvariables.indice_aux = 0;
+	int tipo_de_zombie = misvariables.tipo_de_zombie = 0;
+	float contador_spawn_oleada =misvariables.contador_spawn_oleada = 0.0f;
+	float tiempo_spawn_oleada = misvariables.tiempo_spawn_oleada = 0.0f;
+	int fila_casilla_spawn =misvariables.fila_casilla_spawn = 0;
+
+	// Variables independientes
+	int vida_de_la_casa = NUMERO_DE_ATAQUES_PARA_DESTRUIR_CASA;
+	float tiempo_inicio_de_oleada = (float)TIEMPO_PREPARACION_INICIAL;
+	float delta_reloj = 0.0f;
 
 	/* ------------------- LÓGICA DEL JUEGO ------------------ */
 
@@ -61,7 +201,7 @@ int main(void) {
 	/*
 	También declaramos puntero nulo hacia arreglo de proyectiles.
 	*/
-	proyectil *array_proyectiles;
+	proyectil *array_proyectiles = NULL;
 
 	/*
 	Hacemos un recuento de la cantidades de entidades (plantas o zombies)
@@ -90,35 +230,45 @@ int main(void) {
 	asigna_entidades(&Matriz_Entidades, filas_matriz, 
 		columnas_matriz, &array_entidades);
 
-	/*
-	### Variables Fundamentales del Main Loop ###
-	(para agregar un guardado de partida, estas son 
-	las variables que deberían ser almacenadas)
-	*/
-	int soles = 0;
-	float reloj_juego = 0; 
-	float reloj_auxiliar = 0;
-	float delta_reloj = reloj_juego - reloj_auxiliar;
-	int flag_oleada = 0;
-	int oleadas_transcurridas = 0;
-	int presupuesto_oleada = 0;
-	int juego_activo = 1;
-	int vida_de_la_casa = NUMERO_DE_ATAQUES_PARA_DESTRUIR_CASA;
+	// Temporal, instrucción para despejar la terminal
+	printf("\033[2J\033[H");
 
-	// ### Variables Auxiliares del Main Loop ###
+	// Temporal, para esconder el cursor
+	printf("\033[?25l");
 
-	int indice_entidad = 0;
-	int indice_proyectil = 0;
-	float contador_soles = 0;
-	int indice_aux = 0;
-	int tipo_de_zombie = 0;
-	float contador_spawn_oleada = 0;
-	float tiempo_spawn_oleada = 0;
-	int fila_casilla_spawn = 0;
+	/* ---------------- INICIALIZACIÓN GRÁFICA ---------------- */
+
+    if (!SDL_CreateWindowAndRenderer("Plants vs Zombies - Zombies Animados", ANCHO_VENTANA, ALTO_VENTANA, 0, &window, &renderer)) {
+        SDL_Log("Error al crear ventana o renderer: %s", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    TexturasJuego tex = {0};
+    tex.jardin          = IMG_LoadTexture(renderer, "Imagenes/jardin.png");
+    tex.pasto_respaldo  = IMG_LoadTexture(renderer, "Imagenes/pasto.png");
+    tex.zombie_caminar  = IMG_LoadTexture(renderer, "Imagenes/zombie_caminar.png");
+    tex.zombie_comer    = IMG_LoadTexture(renderer, "Imagenes/zombie_comer.png");
+    tex.zombie_respaldo = IMG_LoadTexture(renderer, "Imagenes/zombie.png");
+    tex.zombieb         = IMG_LoadTexture(renderer, "Imagenes/zombieb.png");
+    tex.girasol         = IMG_LoadTexture(renderer, "Imagenes/girasol.png");
+    tex.lanzaguisantes  = IMG_LoadTexture(renderer, "Imagenes/lanzaguisantes.png");
+    tex.lanza_hielo     = IMG_LoadTexture(renderer, "Imagenes/lanzaguisanteshielo.png");
+    tex.nuez            = IMG_LoadTexture(renderer, "Imagenes/nuez.png");
+    tex.tronco          = IMG_LoadTexture(renderer, "Imagenes/tronco.png");
+    tex.guisante        = IMG_LoadTexture(renderer, "Imagenes/guisante.png");
+    tex.guisante_azul   = IMG_LoadTexture(renderer, "Imagenes/guisanteazul.png");
 
 	// ###### Main Loop ######
 
+    SDL_Event evento;
 	while (juego_activo == 1){
+
+        while (SDL_PollEvent(&evento)) {
+            if (evento.type == SDL_EVENT_QUIT) {
+                juego_activo = false;
+            }
+        }
 
 		/* Definición de 'delta_reloj'
 		Es la diferencia de tiempo en el reloj entre la iteración actual del 
@@ -128,25 +278,38 @@ int main(void) {
 		delta_reloj = reloj_juego - reloj_auxiliar;
 
 		/* Inicio de una oleada
-		La primera oleada del juego comienza a los 18 segundos, luego, cada
-		oleada subsiguiente tendrá una diferencia determinada entre si.
-		OJO: La duración por defecto entre oleadas esta ajustada para que solo hayan cuatro oleadas.
+		Se asigna 2 a 'oleada_en_curso' para indicar que recien
+		acaba de empezar una oleada, y se debe agregar el presupuesto
+		para la nueva oleada de zombies.
 		*/
-		if ((int)reloj_juego == TIEMPO_PREPARACION_INICIAL + (TIEMPO_ENTRE_OLEADAS * oleadas_transcurridas + (oleadas_transcurridas)*(oleadas_transcurridas + 2)) && oleadas_transcurridas < 4) {
-			oleadas_transcurridas++;
-			flag_oleada = oleadas_transcurridas;
+		if (oleada_en_curso == 0 && reloj_juego >= tiempo_inicio_de_oleada)
+			oleada_en_curso = 2;
 
-			// Fórmula del término general para la secuencia 2, 5, 9, 14, ...
-			presupuesto_oleada += ((flag_oleada * flag_oleada) + (3 * flag_oleada)) / 2;
-		}
-
-		/* Fin de una oleada
-		El primer descanso entre oleadas iniciará al finalizar la primera oleada, y cada 
-		descanso subsiguiente tendra una diferencia determinada entre si.
+		/*
+		Si en una oleada no hay zombies y no hay presupuesto, se analizan 
+		las posibles explicaciones: la oleada acaba de empezar o acaba de 
+		terminar.
 		*/
-		if (reloj_juego == (TIEMPO_PREPARACION_INICIAL + TIEMPO_DURACION_DE_UNA_OLEADA) + (TIEMPO_ENTRE_OLEADAS * (oleadas_transcurridas - 1) + (oleadas_transcurridas)*(oleadas_transcurridas + 2))) {
-			flag_oleada = 0;
-			presupuesto_oleada = 0;
+		if (oleada_en_curso != 0 && presupuesto_oleada == 0 && cantidad_zombies == 0) {
+			switch(oleada_en_curso) {
+				/* Fin de una oleada / Inicio de un descanso
+				Comienza un descanso de 'TIEMPO_DE_DESCANSO' segundos.
+				*/
+				case 1:
+					oleadas_transcurridas++;
+					oleada_en_curso = 0;
+					presupuesto_oleada = 0;
+					tiempo_inicio_de_oleada = reloj_juego + TIEMPO_DE_DESCANSO;
+					break;
+				/* Inicio de una oleada
+				Se agrega un monto al presupuesto de la oleada. Este monto
+				será el producto entre 3 y el nivel de la oleada.
+				*/
+				case 2:
+					oleada_en_curso = 1;
+					presupuesto_oleada += 3 * (oleadas_transcurridas + 1);
+					break;
+			}
 		}
 
 		/* Logica para agregar zombies en una oleada 
@@ -279,7 +442,7 @@ int main(void) {
 						*/
 						if (j == 0) {
 							array_entidades[indice_entidad].contador_movimiento += delta_reloj;
-							desplazamiento_zombie_final(indice_entidad, &array_entidades, &vida_de_la_casa, &juego_activo);
+							desplazamiento_zombie_final(indice_entidad, &array_entidades, &vida_de_la_casa);
 						}
 
 						/* Caso 2: Casilla libre a la izquierda del zombie
@@ -354,11 +517,10 @@ int main(void) {
 		}
 
 		/* Condición de victoria!
-		Si el jugador finaliza la última oleada y no quedan
-		más zombies en el tablero, entonces el juego termina 
-		en una victoria para el jugador.
+		Si el jugador finaliza la última oleada, entonces 
+		el juego termina en una victoria para el jugador.
 		*/
-		if (oleadas_transcurridas == 4 && flag_oleada == 0 && cantidad_zombies == 0)
+		if (oleadas_transcurridas == CANTIDAD_DE_OLEADAS && oleada_en_curso == 0)
 			juego_activo = 2;
 
 		/* Condición de derrota..
@@ -369,13 +531,75 @@ int main(void) {
 		if (vida_de_la_casa <= 0)
 			juego_activo = -1;
 
-		/* ------------------- VISUALIZACIÓN DEL MAPA ------------------ */
+		// ----Implementación temporal----
 
-		// Mostrar pantalla aquí
+        SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+        SDL_RenderClear(renderer);
 
+        dibujar_tablero(renderer, &tex, filas_matriz, columnas_matriz, Matriz_Entidades, Matriz_Proyectiles);
 
-		/* ------------------- MÁS LÓGICA DEL JUEGO ------------------ */
-		/* Lógica del Tiempo
+        SDL_RenderPresent(renderer);
+
+		// Se imprime matriz actual
+		printf("\033[H");
+
+		printf("\n\n   Soles: %d\n", soles);
+
+		printf("   Oleadas transcurridas: %d\n", oleadas_transcurridas);
+
+		printf("   Inicio de la oleada: %f\n", tiempo_inicio_de_oleada);
+
+		printf("   Presupuesto de la oleada : %d\n", presupuesto_oleada);
+
+		printf("   Oleada en curso: %d\n", oleada_en_curso);
+
+		printf("   Reloj del juego: %.2f\n\n", reloj_juego);
+
+		printf("\t Matriz de Entidades\n");
+		for (int i = 0; i < filas_matriz; i++) {
+			printf("\t  ");
+			for (int j = 0; j < columnas_matriz; j++){
+				printf("%d ", Matriz_Entidades[i][j]);
+			}
+			printf("\n");
+		}
+
+		printf("\n");
+
+		printf("\tMatriz de Proyectiles\n");
+		for (int i = 0; i < filas_matriz; i++) {
+			printf("\t  ");
+			for (int j = 0; j < columnas_matriz; j++) {
+				printf("%d ", Matriz_Proyectiles[i][j]);
+			}
+			printf("\n");
+		}
+
+		printf("\n");
+
+		// ---- Fin de implementación temporal ----
+
+		/* Guardado de Partida
+		Se almacena el mapa del juego actual y las variables que sean
+		necesarias para conservar la logica del juego.
+		*/
+		if (0) {
+			if (guardarEstado("configuracion/partida_guardada.txt", &mimapa)) {
+	            printf("\nPartida guardada exitosamente en 'configuracion/partida_guardada.txt'!\n");
+	        } 
+	        else {
+	            printf("\nError al guardar la partida.\n");
+	        }
+
+	        if (guardarVariables("configuracion/variables_guardadas.txt", &misvariables)) {
+	            printf("\nVariables guardadas exitosamente en 'configuracion/variables_guardadas.txt'!\n");
+	        } 
+	        else {
+	    		printf("\nError al guardar las variables.\n");
+	        }
+	    }
+
+		/* Lógica de Tiempo
 		El juego se pausa durante la duración de un tick
 		para permitir el procesado del programa. La duración
 		del tick puede ser modificada, pero se recomienda un
@@ -387,6 +611,25 @@ int main(void) {
 			reloj_juego += DURACION_TICK;	
 		}
 	}
+
+	if (tex.jardin) SDL_DestroyTexture(tex.jardin);
+    if (tex.pasto_respaldo) SDL_DestroyTexture(tex.pasto_respaldo);
+    if (tex.zombie_caminar) SDL_DestroyTexture(tex.zombie_caminar);
+    if (tex.zombie_comer) SDL_DestroyTexture(tex.zombie_comer);
+    if (tex.zombie_respaldo) SDL_DestroyTexture(tex.zombie_respaldo);
+    if (tex.zombieb) SDL_DestroyTexture(tex.zombieb);
+    if (tex.girasol) SDL_DestroyTexture(tex.girasol);
+    if (tex.lanzaguisantes) SDL_DestroyTexture(tex.lanzaguisantes);
+    if (tex.lanza_hielo) SDL_DestroyTexture(tex.lanza_hielo);
+    if (tex.nuez) SDL_DestroyTexture(tex.nuez);
+    if (tex.tronco) SDL_DestroyTexture(tex.tronco);
+    if (tex.guisante) SDL_DestroyTexture(tex.guisante);
+    if (tex.guisante_azul) SDL_DestroyTexture(tex.guisante_azul);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
 
 	if (juego_activo == 2) 	// Victoria del jugador
 		printf("\n\n   ¡Has ganado!\n\n");
@@ -408,6 +651,5 @@ int main(void) {
 	free(array_entidades);				
 	free(Matriz_Proyectiles);
 	free(array_proyectiles);
-	
 	return 0;
 }

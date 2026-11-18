@@ -18,7 +18,7 @@ void genera_soles_planta(int indice, entidad **array, int *soles) {
 	}
 }
 
-void desplazamiento_zombie_final(int indice, entidad **array, int *vida_de_la_casa, int *juego_activo) {
+void desplazamiento_zombie_final(int indice, entidad **array, int *vida_de_la_casa) {
 	// Si el zombie se encuentra en la primera columna, comenzará a atacar
 	// a la casa, quitándole puntos de vida según el daño que haga el zombie
 	(*array)[indice].contador_ataque = 0;
