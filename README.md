@@ -15,11 +15,11 @@
 Tanto *Matriz_Entidades* como *Matriz_Proyectiles* son triple punteros de tipo int (int***). Deben estar implementadas usando memoría dinámica, mediante el uso de malloc().
 ## Paquetes de Mejoras
 ### Paquete 1: Almacenamiento & Cambios de Estados
-*W.I.P.*
+Guardado de partida, capacidad de almacenar variables y mapa en archivos externos.
 ### Paquete 2: Mejora en la Jugabilidad
 Nuevas plantas y nuevos zombies. Los proyectiles son una estructura separada que reaccionan a las casillas que atraviesan.
 ### Paquete 3: Mejoras en la Visualización
-*W.I.P.*
+Uso de libreria gráfica SDL3, representación con animaciones.
 ## Plantas
 ### Girasol (1)
 Planta generadora de soles. 
