@@ -1,3 +1,21 @@
+###########--------- Declaración de Uso de la IA ---------###########
+Entrada: No hay registro de uso de la IA.
+Lógica: Uso de ChatGPT para encontrar bugs y explicar aspectos del lenguaje C.
+Salida: Uso de IA para redactar código.
+
+###########--------- Bugs Conocidos ---------###########
+1. Agregar plantas a la última columna provocará que los zombies no puedan spawnear en esa casilla.
+2. La animación de ataque del zombie con cono es idéntica a la animación de ataque del zombie común.
+3. El presupuesto de la oleada se gasta aún cuando se intenta spawnear un zombie en una casilla ocupada.
+
+###########--------- Guardado de Partida ---------###########
+Guardar Partida:
+Oprimir la tecla 'G' en la ventana del juego. Se crea log de texto confirmando realización del guardado en el directorio de main.
+
+Cargar Partida:
+Seleccionar la opción 1 al inicio de la ejecución del juego.
+
+###########--------- Instalación del Programa ---------###########
 Requerimientos:
 Simple DirectMedia Layer 3 (SDL3)
 
@@ -19,7 +37,7 @@ Este proceso debe ser realizado para los dos archivos comprimidos adjuntos, pues
 Uso de Makefile:
 'make' para compilar
 'make clean' para eliminar archivos objeto
-'make play' para ejecutar aplicación
+'make play' para ejecutar aplicación (equivalente a usar './plantas_vs_zombies')
 
 Uso del ejecutable:
 './plantas_vs_zombies' para ejecutar aplicación

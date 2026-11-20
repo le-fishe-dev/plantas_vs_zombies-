@@ -12,19 +12,6 @@
 
 #include "graficos/graficos_utils.h"
 
-// Configuracion de las dimensiones de la ventana de juego
-#define ANCHO_VENTANA 1100
-#define ALTO_VENTANA 550
-
-// Configuracion de las hojas de sprites de zombies
-#define COLS_Z_CAMINAR   9
-#define FILAS_Z_CAMINAR  1
-#define FRAMES_Z_CAMINAR 9
-
-#define COLS_Z_COMER     5
-#define FILAS_Z_COMER    8
-#define FRAMES_Z_COMER   40
-
 int main(void) {
 	/* ---------------- INICIALIZACIÓN GRÁFICA ---------------- */
 
@@ -33,9 +20,6 @@ int main(void) {
         SDL_Log("Error al inicializar SDL: %s", SDL_GetError());
         return 1;
     }
-    
-    SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
 
 	/* ---------------- LECTURA DE LA ENTRADA ---------------- */
 	
@@ -91,10 +75,9 @@ int main(void) {
     do {
         mostrarMapa(&mimapa);
         printf("\n--- MENU PAQUETE 1 ---\n");
-        printf("1. Guardar partida actual\n");
-        printf("2. Cargar partida guardada\n");
-        printf("3. Aumentar tamano del mapa\n");
-        printf("4. Jugar!\n");
+        printf("1. Cargar partida guardada\n");
+        printf("2. Aumentar tamano del mapa\n");
+        printf("3. Jugar!\n");
         printf("Selecciona una opcion: ");
         scanf("%d", &opcion);
         
@@ -102,12 +85,6 @@ int main(void) {
 		printf("\033[2J\033[H");
 
         if (opcion == 1) {
-            if (guardarEstado("configuracion/partida_guardada.txt", &mimapa)) {
-                printf("\nPartida guardada exitosamente en 'configuracion/partida_guardada.txt'!\n");
-            } else {
-                printf("\nError al guardar la partida.\n");
-            }
-        } else if (opcion == 2) {
             liberarMapa(&mimapa); // liberar mapa previo 
             if (cargarMapa("configuracion/partida_guardada.txt", &mimapa)) {
                 printf("\nPartida cargada exitosamente!\n");
@@ -118,7 +95,7 @@ int main(void) {
         		printf("Error al cargar las variables.\n");
         		return 1;
     		}
-        } else if (opcion == 3) {
+        } else if (opcion == 2) {
             int nf, nc;
             printf("Ingresa nuevas filas y columnas (actual: %dx%d): ", mimapa.filas, mimapa.columnas);
             scanf("%d %d", &nf, &nc);
@@ -126,7 +103,7 @@ int main(void) {
             aumentarMatriz(&mimapa, &miconfig, nf, nc);
         }
 
-    } while (opcion != 4);
+    } while (opcion != 3);
 
 	// Se genera matriz de 5x9 con memoria dinámica.
 	int **Matriz_Entidades = mimapa.matriz;	// puntero de matriz
@@ -143,23 +120,23 @@ int main(void) {
 	int CANTIDAD_DE_OLEADAS = miconfig.cantidad_de_oleadas;
 
 	// Actualizamos variables con el valor asignado final
-	int soles = misvariables.soles = 0;
-	float reloj_juego = misvariables.reloj_juego = 0.0f; 
-	float reloj_auxiliar = misvariables.reloj_auxiliar = 0.0f;
-	int oleada_en_curso =misvariables.oleada_en_curso = 0;
-	int oleadas_transcurridas =misvariables.oleadas_transcurridas = 0;
+	int soles = misvariables.soles;
+	float reloj_juego = misvariables.reloj_juego; 
+	float reloj_auxiliar = misvariables.reloj_auxiliar;
+	int oleada_en_curso = misvariables.oleada_en_curso;
+	int oleadas_transcurridas = misvariables.oleadas_transcurridas;
 
-	int presupuesto_oleada =misvariables.presupuesto_oleada = 0;
-	int juego_activo =misvariables.juego_activo = 1;
-	int indice_entidad =misvariables.indice_entidad = 0;
-	int indice_proyectil =misvariables.indice_proyectil = 0;
-	float contador_soles =misvariables.contador_soles = 0.0f;
+	int presupuesto_oleada = misvariables.presupuesto_oleada;
+	int juego_activo = misvariables.juego_activo ;
+	int indice_entidad = misvariables.indice_entidad;
+	int indice_proyectil = misvariables.indice_proyectil;
+	float contador_soles = misvariables.contador_soles;
 
-	int indice_aux =misvariables.indice_aux = 0;
-	int tipo_de_zombie = misvariables.tipo_de_zombie = 0;
-	float contador_spawn_oleada =misvariables.contador_spawn_oleada = 0.0f;
-	float tiempo_spawn_oleada = misvariables.tiempo_spawn_oleada = 0.0f;
-	int fila_casilla_spawn =misvariables.fila_casilla_spawn = 0;
+	int indice_aux = misvariables.indice_aux;
+	int tipo_de_zombie = misvariables.tipo_de_zombie;
+	float contador_spawn_oleada = misvariables.contador_spawn_oleada;
+	float tiempo_spawn_oleada = misvariables.tiempo_spawn_oleada;
+	int fila_casilla_spawn = misvariables.fila_casilla_spawn;
 
 	// Variables independientes
 	int vida_de_la_casa = NUMERO_DE_ATAQUES_PARA_DESTRUIR_CASA;
@@ -230,45 +207,59 @@ int main(void) {
 	asigna_entidades(&Matriz_Entidades, filas_matriz, 
 		columnas_matriz, &array_entidades);
 
-	// Temporal, instrucción para despejar la terminal
+	// Instrucción para despejar la terminal
 	printf("\033[2J\033[H");
 
-	// Temporal, para esconder el cursor
+	// Instrucción para esconder el cursor
 	printf("\033[?25l");
 
 	/* ---------------- INICIALIZACIÓN GRÁFICA ---------------- */
 
-    if (!SDL_CreateWindowAndRenderer("Plants vs Zombies - Zombies Animados", ANCHO_VENTANA, ALTO_VENTANA, 0, &window, &renderer)) {
-        SDL_Log("Error al crear ventana o renderer: %s", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
+	// Crear ventana
+	SDL_Window* window = SDL_CreateWindow(
+	    "Plants vs Zombies",
+	    ANCHO_VENTANA,
+	    ALTO_VENTANA,
+	    SDL_WINDOW_RESIZABLE
+	);
 
-    TexturasJuego tex = {0};
-    tex.jardin          = IMG_LoadTexture(renderer, "Imagenes/jardin.png");
-    tex.pasto_respaldo  = IMG_LoadTexture(renderer, "Imagenes/pasto.png");
-    tex.zombie_caminar  = IMG_LoadTexture(renderer, "Imagenes/zombie_caminar.png");
-    tex.zombie_comer    = IMG_LoadTexture(renderer, "Imagenes/zombie_comer.png");
-    tex.zombie_respaldo = IMG_LoadTexture(renderer, "Imagenes/zombie.png");
-    tex.zombieb         = IMG_LoadTexture(renderer, "Imagenes/zombieb.png");
-    tex.girasol         = IMG_LoadTexture(renderer, "Imagenes/girasol.png");
-    tex.lanzaguisantes  = IMG_LoadTexture(renderer, "Imagenes/lanzaguisantes.png");
-    tex.lanza_hielo     = IMG_LoadTexture(renderer, "Imagenes/lanzaguisanteshielo.png");
-    tex.nuez            = IMG_LoadTexture(renderer, "Imagenes/nuez.png");
-    tex.tronco          = IMG_LoadTexture(renderer, "Imagenes/tronco.png");
-    tex.guisante        = IMG_LoadTexture(renderer, "Imagenes/guisante.png");
-    tex.guisante_azul   = IMG_LoadTexture(renderer, "Imagenes/guisanteazul.png");
+	if (window == NULL) {
+	    SDL_Log("Error al crear ventana: %s", SDL_GetError());
+	    SDL_Quit();
+	    return 1;
+	}
+
+	// Crear renderer
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+
+	if (renderer == NULL) {
+	    SDL_Log("Error al crear renderer: %s", SDL_GetError());
+	    SDL_DestroyWindow(window);
+	    SDL_Quit();
+	    return 1;
+	}
+
+	// Cargar texturas después de inicializar el renderer
+	TexturasJuego tex = cargar_texturas(renderer);
 
 	// ###### Main Loop ######
 
     SDL_Event evento;
+    int guardar_solicitado = 0; // Tecla G: Guardar partida
 	while (juego_activo == 1){
 
         while (SDL_PollEvent(&evento)) {
             if (evento.type == SDL_EVENT_QUIT) {
-                juego_activo = false;
+                juego_activo = 0;
+            }
+            // Detectar tecla G (Guardar partida) una sola vez por pulsacion
+            else if (evento.type == SDL_EVENT_KEY_DOWN && !evento.key.repeat) {
+                if (evento.key.scancode == SDL_SCANCODE_G) {
+                    guardar_solicitado = 1;
+                }
             }
         }
+
 
 		/* Definición de 'delta_reloj'
 		Es la diferencia de tiempo en el reloj entre la iteración actual del 
@@ -531,7 +522,7 @@ int main(void) {
 		if (vida_de_la_casa <= 0)
 			juego_activo = -1;
 
-		// ----Implementación temporal----
+		// ----Representación Gráfica----
 
         SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
         SDL_RenderClear(renderer);
@@ -577,27 +568,54 @@ int main(void) {
 
 		printf("\n");
 
-		// ---- Fin de implementación temporal ----
-
 		/* Guardado de Partida
 		Se almacena el mapa del juego actual y las variables que sean
 		necesarias para conservar la logica del juego.
 		*/
-		if (0) {
-			if (guardarEstado("configuracion/partida_guardada.txt", &mimapa)) {
-	            printf("\nPartida guardada exitosamente en 'configuracion/partida_guardada.txt'!\n");
-	        } 
-	        else {
-	            printf("\nError al guardar la partida.\n");
-	        }
+        if (guardar_solicitado) {
+            guardar_solicitado = 0;
 
-	        if (guardarVariables("configuracion/variables_guardadas.txt", &misvariables)) {
-	            printf("\nVariables guardadas exitosamente en 'configuracion/variables_guardadas.txt'!\n");
-	        } 
-	        else {
-	    		printf("\nError al guardar las variables.\n");
-	        }
-	    }
+            // Abrimos stream
+            FILE *fh = fopen("log_guardado_de_partida.txt", "w");
+            if (fh == NULL) 
+            	return 1;	// Error al crear archivo
+
+            // Guardamos la matriz actual en el archivo correspondiente de texto
+            if (guardarEstado("configuracion/partida_guardada.txt", &mimapa)) {
+                fprintf(fh, "Partida guardada exitosamente en 'configuracion/partida_guardada.txt'!\n");
+            } else {
+                fprintf(fh, "Error al guardar la partida.\n");
+            }
+
+            // Actualizamos las variables
+			misvariables.soles = soles;
+			misvariables.reloj_juego = reloj_juego;
+			misvariables.reloj_auxiliar = reloj_auxiliar;
+			misvariables.oleada_en_curso = oleada_en_curso;
+			misvariables.oleadas_transcurridas = oleadas_transcurridas;
+
+			misvariables.presupuesto_oleada = presupuesto_oleada;
+			misvariables.juego_activo = juego_activo;
+			misvariables.indice_entidad = indice_entidad;
+			misvariables.indice_proyectil = indice_proyectil;
+			misvariables.contador_soles = contador_soles;
+
+			misvariables.indice_aux = indice_aux;
+			misvariables.tipo_de_zombie = tipo_de_zombie;
+			misvariables.contador_spawn_oleada = contador_spawn_oleada;
+			misvariables.tiempo_spawn_oleada = tiempo_spawn_oleada;
+			misvariables.fila_casilla_spawn = fila_casilla_spawn;
+
+			// Las guardamos en el archivo correspondiente de texto
+            if (guardarVariables("configuracion/variables_guardadas.txt", &misvariables)) {
+                fprintf(fh, "Variables guardadas exitosamente en 'configuracion/variables_guardadas.txt'!\n");
+            } else {
+                fprintf(fh, "Error al guardar las variables.\n");
+            }
+
+            // Cerramos stream
+            fclose(fh);
+        }
 
 		/* Lógica de Tiempo
 		El juego se pausa durante la duración de un tick
@@ -612,24 +630,11 @@ int main(void) {
 		}
 	}
 
-	if (tex.jardin) SDL_DestroyTexture(tex.jardin);
-    if (tex.pasto_respaldo) SDL_DestroyTexture(tex.pasto_respaldo);
-    if (tex.zombie_caminar) SDL_DestroyTexture(tex.zombie_caminar);
-    if (tex.zombie_comer) SDL_DestroyTexture(tex.zombie_comer);
-    if (tex.zombie_respaldo) SDL_DestroyTexture(tex.zombie_respaldo);
-    if (tex.zombieb) SDL_DestroyTexture(tex.zombieb);
-    if (tex.girasol) SDL_DestroyTexture(tex.girasol);
-    if (tex.lanzaguisantes) SDL_DestroyTexture(tex.lanzaguisantes);
-    if (tex.lanza_hielo) SDL_DestroyTexture(tex.lanza_hielo);
-    if (tex.nuez) SDL_DestroyTexture(tex.nuez);
-    if (tex.tronco) SDL_DestroyTexture(tex.tronco);
-    if (tex.guisante) SDL_DestroyTexture(tex.guisante);
-    if (tex.guisante_azul) SDL_DestroyTexture(tex.guisante_azul);
-
+	// Liberamos memoria asociada a la representación gráfica de SDL3
+    liberar_texturas(&tex);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
 
 	if (juego_activo == 2) 	// Victoria del jugador
 		printf("\n\n   ¡Has ganado!\n\n");
