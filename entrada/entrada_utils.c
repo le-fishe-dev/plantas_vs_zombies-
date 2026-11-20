@@ -10,7 +10,7 @@ int cargarVariables(const char *nombreArchivo, Variables_Main_Loop *variables) {
         return 0; // falla
     } 
 
-    // Leemos los 18 numeros de forma ordenada y los guardamos en la caja 
+    // Leemos los 15 numeros de forma ordenada y los guardamos en la caja 
     fscanf(archivo, "%d %f %f %d %d %d %d %d %d %f %d %d %f %f %d\n", 
         &variables->soles, 
         &variables->reloj_juego,

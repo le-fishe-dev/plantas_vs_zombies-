@@ -1,13 +1,3 @@
-Zombie con Balde (-4)
-
-vida = 800
-ataque = 100
-tiempo_en_atacar = 2
-tiempo_en_moverse = 5
-generacion_soles = 0
-tiempo_en_generar_soles = 0
-costo = 4
-
 Zombie con Cono (-3)
 
 vida = 400

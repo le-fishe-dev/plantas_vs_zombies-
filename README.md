@@ -40,6 +40,3 @@ Zombie regular, tiene la menor cantidad de vida de todos los zombies, pero es el
 Tiene la misma cantidad de vida que el zombie común, pero es más rápido.
 ### Zombie con Cono (-3)
 Tiene más vida que el zombie común, resistiendo más impactos de guisantes.
-### Zombie con Balde (-4)
-Tiene aún más vida que el zombie con cono, aunque es el zombie menos frecuente, es el que más impactos de guisantes resiste.
-
